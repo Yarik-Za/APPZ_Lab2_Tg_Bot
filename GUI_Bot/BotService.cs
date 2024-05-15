@@ -66,18 +66,45 @@ namespace GUI_Bot
 
             // using Telegram.Bot.Types.ReplyMarkups;
 
-            ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
+
+
+            //        ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
+            //        {
+            //new KeyboardButton[] { "Help me", "Call me ☎️" },})
+            //        {
+            //            ResizeKeyboard = true
+            //        };
+
+            //        Message sentMessage = await botClient.SendTextMessageAsync(
+            //            chatId: chatId,
+            //            text: "Choose a response",
+            //            replyMarkup: replyKeyboardMarkup,
+            //            cancellationToken: cancellationToken);
+
+            // using Telegram.Bot.Types.ReplyMarkups;
+
+            InlineKeyboardMarkup inlineKeyboard = new(new[]
             {
-    new KeyboardButton[] { "Help me", "Call me ☎️" },})
-            {
-                ResizeKeyboard = true
-            };
+                // first row
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData(text: "1.1", callbackData: "11"),
+                    InlineKeyboardButton.WithCallbackData(text: "1.2", callbackData: "12"),
+                },
+                // second row
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData(text: "2.1", callbackData: "21"),
+                    InlineKeyboardButton.WithCallbackData(text: "2.2", callbackData: "22"),
+                },
+            });
 
             Message sentMessage = await botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: "Choose a response",
-                replyMarkup: replyKeyboardMarkup,
+                text: "A message with an inline keyboard markup",
+                replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
+
 
             //// Echo received message text
             //Message sentMessage = await botClient.SendTextMessageAsync(
