@@ -9,6 +9,7 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using Message = Telegram.Bot.Types.Message;
 
 namespace GUI_Bot
@@ -63,11 +64,26 @@ namespace GUI_Bot
 
             Debug.WriteLine($"Received a '{messageText}' message in chat {chatId} from {message.Chat.FirstName}.");
 
-            // Echo received message text
+            // using Telegram.Bot.Types.ReplyMarkups;
+
+            ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
+            {
+    new KeyboardButton[] { "Help me", "Call me ☎️" },})
+            {
+                ResizeKeyboard = true
+            };
+
             Message sentMessage = await botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: "You said:\n" + messageText,
+                text: "Choose a response",
+                replyMarkup: replyKeyboardMarkup,
                 cancellationToken: cancellationToken);
+
+            //// Echo received message text
+            //Message sentMessage = await botClient.SendTextMessageAsync(
+            //    chatId: chatId,
+            //    text: "You said:\n" + messageText,
+            //    cancellationToken: cancellationToken);
         }
 
         Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -83,7 +99,7 @@ namespace GUI_Bot
             return Task.CompletedTask;
         }
 
-        
+
 
 
     }
