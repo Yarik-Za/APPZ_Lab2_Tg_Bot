@@ -33,7 +33,7 @@ namespace GUI_Bot
                     string jsonContent = await response.Content.ReadAsStringAsync();
 
                     // Десериализуем JSON в объект WeatherDataLite
-                    WeatherDataLite weatherData = JsonConvert.DeserializeObject<WeatherDataLite>(jsonContent);
+                    WeatherData weatherData = JsonConvert.DeserializeObject<WeatherData>(jsonContent);
 
                     if (weatherData != null)
                     {
@@ -50,7 +50,7 @@ namespace GUI_Bot
             }
         }
 
-        private string FormatWeatherInfo(WeatherDataLite weatherData)
+        private string FormatWeatherInfo(WeatherData weatherData)
         {
             if (weatherData == null)
             {
@@ -62,12 +62,12 @@ namespace GUI_Bot
                    $"📉Мінімальна температура: {weatherData.Main.TempMin} °C\n" +
                    $"📈Максимальна температура: {weatherData.Main.TempMax} °C\n" +
                    $"💦Вологість повітря: {weatherData.Main.Humidity} %\n" +
-                   $"💨Швидкість вітру: {weatherData.Wind.Speed} м/с" +
-                   $"Погодні умови: {weatherData.Weather.MainDescription} ({weatherData.Weather.Description}) м/с";
+                   $"💨Швидкість вітру: {weatherData.Wind.Speed} м/с\n" +
+                   $"Погодні умови: {weatherData.Weather[0].MainDescription} ({weatherData.Weather[0].Description})";
         }
     }
 
-    public class WeatherDataLite
+    public class WeatherData
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -82,7 +82,7 @@ namespace GUI_Bot
         public WindInfo Wind { get; set; }
 
         [JsonProperty("weather")]
-        public WeatherInfo Weather { get; set; }
+        public List<WeatherInfo> Weather { get; set; }
     }
 
     public class WeatherInfo
@@ -93,6 +93,8 @@ namespace GUI_Bot
         [JsonProperty("description")]
         public string Description { get; set; }
 
+        [JsonProperty("icon")]
+        public string Icon { get; set; }
     }
 
     public class SysInfo
@@ -114,8 +116,6 @@ namespace GUI_Bot
 
         [JsonProperty("humidity")]
         public float Humidity { get; set; }
-
-
     }
 
     public class WindInfo
@@ -123,4 +123,5 @@ namespace GUI_Bot
         [JsonProperty("speed")]
         public float Speed { get; set; }
     }
+
 }
