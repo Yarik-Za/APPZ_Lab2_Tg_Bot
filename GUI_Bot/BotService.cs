@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -21,7 +22,7 @@ namespace GUI_Bot
         TelegramBotClient botClient = new TelegramBotClient("6919475386:AAH5YtigtvZ1XXf_3x_CNGVc_B5WJUbpyAE");
         CancellationTokenSource cts = new();
         private long waitingForCityChatId; // Чат, в котором ожидается ввод названия города
-
+        
         #region CityName
         private string CityName = null;
 
@@ -93,67 +94,6 @@ namespace GUI_Bot
             Debug.WriteLine($"Start listening for @{me.Username}");
         }
 
-        //private async void BotClient_OnMessage(object sender, MessageEventArgs e)
-        //{
-        //    var message = e.Message;
-
-        //    if (message == null || message.Type != MessageType.Text)
-        //        return;
-
-        //    if (waitingForCityChatId == message.Chat.Id)
-        //    {
-        //        // Ожидание названия города после команды /weather
-        //        var cityName = message.Text.Trim();
-
-        //        if (!string.IsNullOrEmpty(cityName))
-        //        {
-        //            // Получение погоды для указанного города
-        //            var weatherService = new WeatherService(new HttpClient(), "your_api_key_here");
-        //            var weatherInfo = await weatherService.GetWeatherInfo(cityName);
-
-        //            await botClient.SendTextMessageAsync(message.Chat.Id, weatherInfo);
-
-        //            // Сброс состояния ожидания
-        //            waitingForCityChatId = 0;
-        //        }
-        //        else
-        //        {
-        //            await botClient.SendTextMessageAsync(message.Chat.Id, "Вы не ввели название города. Попробуйте еще раз.");
-        //        }
-        //    }
-        //    else if (message.Text.StartsWith("/weather"))
-        //    {
-        //        // Запрос на погоду, ожидаем название города
-        //        waitingForCityChatId = message.Chat.Id;
-
-        //        // Отправляем запрос на ввод города с кнопкой отмены
-        //        var replyMarkup = new InlineKeyboardMarkup(new[]
-        //        {
-        //        new []
-        //        {
-        //            InlineKeyboardButton.WithCallbackData("Отмена", "cancel")
-        //        }
-        //    });
-
-        //        await botClient.SendTextMessageAsync(message.Chat.Id, "Введите название города:", replyMarkup: replyMarkup);
-        //    }
-        //}
-
-        //private async void BotClient_OnCallbackQuery(object sender, CallbackQueryEventArgs e)
-        //{
-        //    var callbackQuery = e.CallbackQuery;
-
-        //    if (callbackQuery == null)
-        //        return;
-
-        //    if (callbackQuery.Data == "cancel")
-        //    {
-        //        // Отмена ожидания ввода города
-        //        waitingForCityChatId = 0;
-        //        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "Вы отменили ввод города.");
-        //    }
-        //}
-
 
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
@@ -186,6 +126,8 @@ namespace GUI_Bot
                     // Logic for handling /weather command
                     await HandleWeatherCommandAsync(botClient, chatId, messageText, cancellationToken);
                 }
+                else if (messageText.StartsWith("/help")) { await HandleHelpCommandAsync(botClient, chatId, cancellationToken: cancellationToken); }
+
 
 
                 // Add more commands as needed
@@ -234,14 +176,14 @@ namespace GUI_Bot
         {
             // Handle the /start command
             await botClient.SendTextMessageAsync
-                (chatId, "Привіт! Я бот для отримання погоди.\n" +
-                "Для цього використовую OpenWeatherMap API.\nВведіть команду <pre>/weather <Місто>" +
-                "\nПриклад: /weather London</pre>" +
-                "\n <strong>(Місто обов'язково латинеценею)</strong>, щоб дізнатися погоду в певному місті.",
+                (chatId,
+                "Привіт!\nЯ бот для отримання погоди.\n" +
+                "Для цього використовую OpenWeatherMap API.\nВведіть команду <code>/weather Місто</code>" +
+                "\nПриклад: /weather London" +
+                "\n<i>(Місто обов'язково латинецею)</i>, щоб дізнатися погоду в певному місті.",
+                parseMode: ParseMode.Html,
                 cancellationToken: cancellationToken);
-
         }
-
 
         // Написать метод
         // для работы
@@ -250,11 +192,9 @@ namespace GUI_Bot
         // ("Отримати прогноз")
 
 
-
-
         private async Task HandleWeatherCommandAsync(ITelegramBotClient botClient, long chatId, string messageText, CancellationToken cancellationToken)
         {
-            if (CityName == null)
+            if (CityName == " ")
                 try
                 {
                     cityName = messageText.Replace("/weather", "").Trim();
@@ -264,24 +204,43 @@ namespace GUI_Bot
             if (!string.IsNullOrWhiteSpace(cityName))
             {
                 // Call WeatherService to get weather information for the specified city
-
-                var ws = new WeatherService(new HttpClient(), "78e036e5241dc4d28d98d543e9a6db04");
-                var weatherInfo = await ws.GetWeatherInfo(cityName);
-
-                // Send weather information back to the user
-                await botClient.SendTextMessageAsync(chatId, weatherInfo, cancellationToken: cancellationToken);
-                cityName = null;
+                await HandleWeatherRequest(botClient, chatId, cityName);
+                cityName = " ";
             }
             else
             {
-                await botClient.SendTextMessageAsync(chatId, "Ви ще не встановили місто для отримання прогнозу.\nВведіть місто:", cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(chatId, "Ви ще не встановили місто для отримання прогнозу." +
+                    "Прочитайте інструкцію \\help з використання команди \\weather, або встановіть кнопкою внизу", cancellationToken: cancellationToken);
 
-                // If no city name is provided after /weather, prompt the user to provide one
-                await botClient.SendTextMessageAsync(chatId, "Введите город после команды /weather.", cancellationToken: cancellationToken);
+               
 
                 //SetCity(messageText);
             }
+           
+        }
 
+        private async Task HandleHelpCommandAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken) {
+           await botClient.SendTextMessageAsync
+                (chatId,
+                "Для отримання погоди ведіть команду <code>/weather Місто</code>" +
+                "\nПриклад: /weather London" +
+                "\n<i>(Місто обов'язково латинецею)</i>, щоб дізнатися погоду в певному місті."+
+                "Кнопка Отримати прогноз використовується для швидкого отримання, при умові що Ви раніше вводили своє місто"+
+                "Кнопка Змінити місто - змінює місто для пошуку погоди",
+                parseMode: ParseMode.Html,
+                cancellationToken: cancellationToken);
+        }
+
+        // метод для отправки запроса погоды
+        private async Task HandleWeatherRequest(ITelegramBotClient botClient, long chatId, string cityName)
+        {
+            var ws = new WeatherService(new HttpClient(), "78e036e5241dc4d28d98d543e9a6db04");
+            var weatherInfo = await ws.GetWeatherInfo(cityName);
+
+            // Отправьте погодную информацию обратно пользователю
+            await botClient.SendTextMessageAsync(chatId, weatherInfo, cancellationToken: cts.Token);
+
+            
         }
 
         Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
