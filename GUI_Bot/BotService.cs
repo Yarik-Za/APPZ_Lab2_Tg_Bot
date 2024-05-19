@@ -94,7 +94,6 @@ namespace GUI_Bot
             Debug.WriteLine($"Start listening for @{me.Username}");
         }
 
-
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
 
@@ -113,6 +112,7 @@ namespace GUI_Bot
                     return;
 
                 Debug.WriteLine($"Received a '{messageText}' message in chat {chatId} from {message.Chat.FirstName}.");
+
                 // Получаем текущее состояние пользователя
                 var userState = GetUserState(chatId);
 
@@ -127,14 +127,20 @@ namespace GUI_Bot
                     }
                     else if (messageText.StartsWith("/weather"))
                     {
-                        // Logic for handling /weather command
-                        await HandleWeatherCommandAsync(botClient, chatId, messageText, cancellationToken);
+                        if (string.IsNullOrEmpty(cityName))
+                            // Logic for handling weather CITY command
+                            SetCityFromCommand(messageText);
+
+                        if (!string.IsNullOrEmpty(cityName))
+                            // Logic for handling /weather command
+                            await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
                     }
                     else if (messageText.StartsWith("/help")) { await HandleHelpCommandAsync(botClient, chatId, cancellationToken: cancellationToken); }
+                    else if (messageText.StartsWith("/changecity")) { await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken); }
                     else
                     {
                         // For example, if it's not a command and not handled, you can respond with a default message
-                        await botClient.SendTextMessageAsync(chatId, "Неизвестная команда. Попробуйте другую команду.", cancellationToken: cancellationToken);
+                        await botClient.SendTextMessageAsync(chatId, "Невідома команда. Спробуйте іншу", cancellationToken: cancellationToken);
                     }
 
                     // Return after handling the command
@@ -143,7 +149,7 @@ namespace GUI_Bot
                 // If the message is not a command, handle other types of messages here
                 else if (messageText.StartsWith("Змінити місто"))
                 {
-                    HandleChangeCityCommandAsync(botClient, chatId, cancellationToken);
+                    await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken);
                 }
                 else if (userState == UserState.WaitingForCity)
                 {
@@ -157,8 +163,15 @@ namespace GUI_Bot
                 }
                 else if (messageText.StartsWith("Отримати прогноз"))
                 {
-                    // Logic for handling /weather command
-                    await HandleWeatherCommandAsync(botClient, chatId, messageText, cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(cityName))
+                    {
+                        // Logic for handling /weather command
+                        await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
+                    }
+                    else
+                    {
+                        await botClient.SendTextMessageAsync(chatId, $"Місто не встановлене.");
+                    }
                 }
             }
 
@@ -176,14 +189,6 @@ namespace GUI_Bot
                     await botClient.SendTextMessageAsync(chatId, "Зміна міста скасована.");
                 }
             }
-
-
-
-
-
-
-
-
         }
 
         #region for_Waited_message
@@ -228,7 +233,7 @@ namespace GUI_Bot
             var keyboard = new InlineKeyboardMarkup(new[] { new[] { cancelButton } });
 
             // Отправляем сообщение с клавиатурой
-            await botClient.SendTextMessageAsync(chatId, "Ви змінюєте місто, введіть його в наступному поівдомленні." +
+            await botClient.SendTextMessageAsync(chatId, "Ви змінюєте місто, введіть його в наступному повідомленні." +
                 "\n\nНатисніть кнопку \"Відмінити\", щоб скасувати зміну міста.", replyMarkup: keyboard, cancellationToken: cancellationToken);
 
 
@@ -261,37 +266,31 @@ namespace GUI_Bot
                 parseMode: ParseMode.Html,
                 replyMarkup: replyKeyboardMarkup,
                 cancellationToken: cancellationToken);
-
         }
 
-        // Написать метод
-        // для работы
-        // с командой
-        // messageText.StartsWith("Отримати прогноз")
-
-
-        private async Task HandleWeatherCommandAsync(ITelegramBotClient botClient, long chatId, string messageText, CancellationToken cancellationToken)
+        private async Task HandleWeatherCommandAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(cityName))
-                try
-                {
-                    cityName = messageText.Replace("/weather", "").Trim();
-                }
-                catch (Exception ex) { Debug.WriteLine(ex.Message); }
-
             if (!string.IsNullOrWhiteSpace(cityName))
             {
                 // Call WeatherService to get weather information for the specified city
                 await HandleWeatherRequest(botClient, chatId, cityName);
-                cityName = " ";
+                //cityName = " ";
             }
             else
             {
-                await botClient.SendTextMessageAsync(chatId, "Ви ще не встановили місто для отримання прогнозу. " +
+                await botClient.SendTextMessageAsync(chatId, "Ви ще не встановили місто для отримання прогнозу.\n" +
                     "Прочитайте інструкцію /help з використання команди /weather, або встановіть кнопкою внизу", parseMode: ParseMode.Html, cancellationToken: cancellationToken);
-
             }
+        }
 
+        private void SetCityFromCommand(string messageText)
+        {
+            try
+            {
+                cityName = messageText.Replace("/weather", "").Trim();
+            }
+            catch (Exception ex) { Debug.WriteLine(ex.Message); }
+            return;
         }
 
         private async Task HandleHelpCommandAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
