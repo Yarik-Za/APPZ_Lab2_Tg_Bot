@@ -2,7 +2,7 @@
 
 namespace APPZ_Lab2_Zaychenko_622п
 {
-    internal class Program
+    internal class CmdProgram
     {
         static void Main(string[] args)
         {

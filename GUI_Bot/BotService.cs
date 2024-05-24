@@ -96,98 +96,113 @@ namespace GUI_Bot
 
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-
-            if (update.Type == UpdateType.Message)
+            try
             {
 
-                // Only process Message updates: https://core.telegram.org/bots/api#message
-
-                if (update.Message is not { } message)
-                    return;
-
-                var chatId = message.Chat.Id;
-
-                // Only process text messages
-                if (message.Text is not { } messageText)
-                    return;
-
-                Debug.WriteLine($"Received a '{messageText}' message in chat {chatId} from {message.Chat.FirstName}.");
-
-                // Получаем текущее состояние пользователя
-                var userState = GetUserState(chatId);
-
-                // Check if the message is a command
-                if (messageText.StartsWith("/"))
+                if (update.Type == UpdateType.Message)
                 {
-                    // Handle different commands
-                    if (messageText.StartsWith("/start"))
-                    {
-                        // Logic for handling /start command
-                        await HandleStartCommandAsync(botClient, chatId, cancellationToken);
-                    }
-                    else if (messageText.StartsWith("/weather"))
-                    {
-                        if (string.IsNullOrEmpty(cityName))
-                            // Logic for handling weather CITY command
-                            SetCityFromCommand(messageText);
 
-                        if (!string.IsNullOrEmpty(cityName))
+                    // Only process Message updates: https://core.telegram.org/bots/api#message
+
+                    if (update.Message is not { } message)
+                        return;
+
+                    var chatId = message.Chat.Id;
+
+                    // Only process text messages
+                    if (message.Text is not { } messageText)
+                        return;
+
+                    Debug.WriteLine($"Received a '{messageText}' message in chat {chatId} from {message.Chat.FirstName}.");
+
+                    // Получаем текущее состояние пользователя
+                    var userState = GetUserState(chatId);
+
+                    // Check if the message is a command
+                    if (messageText.StartsWith("/"))
+                    {
+                        // Handle different commands
+                        if (messageText.StartsWith("/start"))
+                        {
+                            // Logic for handling /start command
+                            await HandleStartCommandAsync(botClient, chatId, cancellationToken);
+                        }
+                        else if (messageText.StartsWith("/weather"))
+                        {
+                            if (string.IsNullOrEmpty(cityName))
+                                // Logic for handling weather CITY command
+                                SetCityFromCommand(messageText);
+
+                            if (!string.IsNullOrEmpty(cityName))
+                                // Logic for handling /weather command
+                                await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
+                        }
+                        else if (messageText.StartsWith("/help")) { await HandleHelpCommandAsync(botClient, chatId, cancellationToken: cancellationToken); }
+                        else if (messageText.StartsWith("/changecity")) { await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken); }
+                        else
+                        {
+                            // For example, if it's not a command and not handled, you can respond with a default message
+                            await botClient.SendTextMessageAsync(chatId, "Невідома команда. Спробуйте іншу", cancellationToken: cancellationToken);
+                        }
+
+                        // Return after handling the command
+                        return;
+                    }
+                    // If the message is not a command, handle other types of messages here
+                    else if (messageText.StartsWith("Змінити місто"))
+                    {
+                        await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken);
+                    }
+                    else if (userState == UserState.WaitingForCity)
+                    {
+                        // Если пользователь ожидает ввода города, обрабатываем его сообщение как новый город
+                        string newCity = message.Text;
+                        cityName = newCity;
+                        // Устанавливаем состояние пользователя как "не ожидает ввода города"
+                        SetUserState(chatId, UserState.None);
+                        // Отправляем сообщение об успешном изменении города
+                        await botClient.SendTextMessageAsync(chatId, $"Ваше місто змінене на {cityName} успішно.");
+                    }
+                    else if (messageText.StartsWith("Отримати прогноз"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(cityName))
+                        {
                             // Logic for handling /weather command
                             await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
+                        }
+                        else
+                        {
+                            await botClient.SendTextMessageAsync(chatId, $"Місто не встановлене.");
+                        }
                     }
-                    else if (messageText.StartsWith("/help")) { await HandleHelpCommandAsync(botClient, chatId, cancellationToken: cancellationToken); }
-                    else if (messageText.StartsWith("/changecity")) { await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken); }
-                    else
+                }
+
+                // Проверяем, является ли обновление CallbackQuery
+                if (update.Type == UpdateType.CallbackQuery)
+                {
+                    // Получаем данные о нажатой кнопке
+                    var callbackQuery = update.CallbackQuery;
+
+                    // Проверяем, является ли нажатая кнопка "Отмена"
+                    if (callbackQuery.Data == "cancel_change_city")
                     {
-                        // For example, if it's not a command and not handled, you can respond with a default message
-                        await botClient.SendTextMessageAsync(chatId, "Невідома команда. Спробуйте іншу", cancellationToken: cancellationToken);
+                        // Выполняем действия для отмены изменения города
+                        var chatId = callbackQuery.Message.Chat.Id;
+                        await botClient.SendTextMessageAsync(chatId, "Зміна міста скасована.");
                     }
 
-                    // Return after handling the command
-                    return;
-                }
-                // If the message is not a command, handle other types of messages here
-                else if (messageText.StartsWith("Змінити місто"))
-                {
-                    await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken);
-                }
-                else if (userState == UserState.WaitingForCity)
-                {
-                    // Если пользователь ожидает ввода города, обрабатываем его сообщение как новый город
-                    string newCity = message.Text;
-                    cityName = newCity;
-                    // Устанавливаем состояние пользователя как "не ожидает ввода города"
-                    SetUserState(chatId, UserState.None);
-                    // Отправляем сообщение об успешном изменении города
-                    await botClient.SendTextMessageAsync(chatId, $"Ваше місто змінене на {cityName} успішно.");
-                }
-                else if (messageText.StartsWith("Отримати прогноз"))
-                {
-                    if (!string.IsNullOrWhiteSpace(cityName))
-                    {
-                        // Logic for handling /weather command
-                        await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
-                    }
-                    else
-                    {
-                        await botClient.SendTextMessageAsync(chatId, $"Місто не встановлене.");
-                    }
                 }
             }
 
-            // Проверяем, является ли обновление CallbackQuery
-            if (update.Type == UpdateType.CallbackQuery)
+            catch (ApiRequestException apiEx) when (apiEx.ErrorCode == 403)
             {
-                // Получаем данные о нажатой кнопке
-                var callbackQuery = update.CallbackQuery;
-
-                // Проверяем, является ли нажатая кнопка "Отмена"
-                if (callbackQuery.Data == "cancel_change_city")
-                {
-                    // Выполняем действия для отмены изменения города
-                    var chatId = callbackQuery.Message.Chat.Id;
-                    await botClient.SendTextMessageAsync(chatId, "Зміна міста скасована.");
-                }
+                // Игнорируем ошибку блокировки пользователем
+                Debug.WriteLine("Bot was blocked by the user. Ignoring this error and continuing...");
+            }
+            catch (Exception ex)
+            {
+                // Обработка всех других исключений
+                Debug.WriteLine($"Exception: {ex.Message}");
             }
         }
 
@@ -327,8 +342,29 @@ namespace GUI_Bot
                 _ => exception.ToString()
             };
 
+            // Игнорируем ошибку 403, когда бот заблокирован пользователем
+            if (exception is ApiRequestException apiEx && apiEx.ErrorCode == 403)
+            {
+                Debug.WriteLine("Bot was blocked by the user. Ignoring this error and continuing...");
+                return Task.CompletedTask;
+            }
+
             Debug.WriteLine(ErrorMessage);
             return Task.CompletedTask;
+        }
+
+        private async Task SendTextMessageAsyncNoBlock(long ch_id, string text, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await botClient.SendTextMessageAsync(ch_id, text, cancellationToken: cancellationToken);
+            }
+            catch
+            {
+
+            }
+
+
         }
 
     }
