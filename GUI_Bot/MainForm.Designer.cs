@@ -34,6 +34,8 @@
             // cbBotRun
             // 
             cbBotRun.AutoSize = true;
+            cbBotRun.Checked = true;
+            cbBotRun.CheckState = CheckState.Checked;
             cbBotRun.Location = new Point(12, 33);
             cbBotRun.Name = "cbBotRun";
             cbBotRun.Size = new Size(68, 19);
