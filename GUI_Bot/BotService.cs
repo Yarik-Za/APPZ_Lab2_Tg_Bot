@@ -23,42 +23,85 @@ namespace GUI_Bot
         CancellationTokenSource cts = new();
         private long waitingForCityChatId; // Чат, в котором ожидается ввод названия города
 
-        #region CityName
-        private string CityName = null;
+        // Словарь для хранения городов пользователей по идентификатору чата  userCity
+        private readonly Dictionary<long, string> userCities = new Dictionary<long, string>();
+        //private string cityName = null;
 
-        public string cityName
+        //
+        #region CityName
+        //private string CityName = null;
+
+        //public string cityName
+        //{
+        //    get { return CityName; }
+        //    set
+        //    {
+        //        // Проверяем, что value состоит только из букв и пробелов
+        //        if (IsValidCityName(value))
+        //        {
+        //            CityName = value;
+        //        }
+        //        else
+        //        {
+        //            throw new ArgumentException("Invalid city name. Only letters and spaces are allowed.");
+        //        }
+        //    }
+        //}
+
+        //private bool IsValidCityName(string input)
+        //{
+        //    // Используем регулярное выражение для проверки наличия только букв и пробелов
+        //    return Regex.IsMatch(input, @"^[a-zA-Z\s]+$");
+        //}
+
+        //public void SetCity(string newCity)
+        //{
+        //    cityName = newCity; // Устанавливаем новое значение через сеттер
+        //}
+
+        //public string GetCity()
+        //{
+        //    return cityName; // Возвращаем текущее значение через геттер
+        //}
+        #endregion
+        //
+
+
+        #region CityNameDictionary
+        private string GetCity(long chatId)
         {
-            get { return CityName; }
-            set
+            // Получаем город пользователя из хранилища
+            if (userCities.TryGetValue(chatId, out var city))
             {
-                // Проверяем, что value состоит только из букв и пробелов
-                if (IsValidCityName(value))
-                {
-                    CityName = value;
-                }
-                else
-                {
-                    throw new ArgumentException("Invalid city name. Only letters and spaces are allowed.");
-                }
+                return city;
+            }
+            else
+            {
+                // Если город не найден, возвращаем null
+                return null;
             }
         }
 
-        private bool IsValidCityName(string input)
+        private void SetCity(long chatId, string city)
         {
-            // Используем регулярное выражение для проверки наличия только букв и пробелов
-            return Regex.IsMatch(input, @"^[a-zA-Z\s]+$");
+            // Устанавливаем город пользователя в хранилище
+            userCities[chatId] = city;
         }
 
-        public void SetCity(string newCity)
+        private void SetCityFromCommand(long chatId, string messageText)
         {
-            cityName = newCity; // Устанавливаем новое значение через сеттер
+            try
+            {
+                string cityName = messageText.Replace("/weather", "").Trim();
+                SetCity(chatId, cityName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
-        public string GetCity()
-        {
-            return cityName; // Возвращаем текущее значение через геттер
-        }
-        #endregion
+        #endregion 
 
         public BotService()
         {
@@ -129,13 +172,22 @@ namespace GUI_Bot
                         }
                         else if (messageText.StartsWith("/weather"))
                         {
+                            string cityName = GetCity(chatId);
                             if (string.IsNullOrEmpty(cityName))
-                                // Logic for handling weather CITY command
-                                SetCityFromCommand(messageText);
+                                SetCityFromCommand(chatId, messageText);
+
+                            cityName = GetCity(chatId); // Обновляем переменную cityName после установки
 
                             if (!string.IsNullOrEmpty(cityName))
-                                // Logic for handling /weather command
-                                await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
+                                await HandleWeatherCommandAsync(botClient, chatId, cityName, cancellationToken);
+
+                            //if (string.IsNullOrEmpty(cityName))
+                            //    // Logic for handling weather CITY command
+                            //    SetCityFromCommand(messageText);
+
+                            //if (!string.IsNullOrEmpty(cityName))
+                            //    // Logic for handling /weather command
+                            //    await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
                         }
                         else if (messageText.StartsWith("/help")) { await HandleHelpCommandAsync(botClient, chatId, cancellationToken: cancellationToken); }
                         else if (messageText.StartsWith("/changecity")) { await HandleChangeCityCommandAsync(botClient, chatId, cancellationToken); }
@@ -157,23 +209,33 @@ namespace GUI_Bot
                     {
                         // Если пользователь ожидает ввода города, обрабатываем его сообщение как новый город
                         string newCity = message.Text;
-                        cityName = newCity;
+                        SetCity(chatId, newCity);
                         // Устанавливаем состояние пользователя как "не ожидает ввода города"
                         SetUserState(chatId, UserState.None);
                         // Отправляем сообщение об успешном изменении города
-                        await botClient.SendTextMessageAsync(chatId, $"Ваше місто змінене на {cityName} успішно.");
+                        await botClient.SendTextMessageAsync(chatId, $"Ваше місто змінене на {GetCity(chatId)} успішно.");
                     }
                     else if (messageText.StartsWith("Отримати прогноз"))
                     {
+                        string cityName = GetCity(chatId);
                         if (!string.IsNullOrWhiteSpace(cityName))
                         {
-                            // Logic for handling /weather command
-                            await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
+                            await HandleWeatherCommandAsync(botClient, chatId, cityName, cancellationToken);
                         }
                         else
                         {
-                            await botClient.SendTextMessageAsync(chatId, $"Місто не встановлене.");
+                            await botClient.SendTextMessageAsync(chatId, "Місто не встановлене.", cancellationToken: cancellationToken);
                         }
+
+                        //if (!string.IsNullOrWhiteSpace(cityName))
+                        //{
+                        //    // Logic for handling /weather command
+                        //    await HandleWeatherCommandAsync(botClient, chatId, cancellationToken);
+                        //}
+                        //else
+                        //{
+                        //    await botClient.SendTextMessageAsync(chatId, $"Місто не встановлене.");
+                        //}
                     }
                 }
 
@@ -241,6 +303,9 @@ namespace GUI_Bot
             // Отправляем сообщение с просьбой ввести новый город
             //await botClient.SendTextMessageAsync(chatId, "Ви змінюєте місто, введіть його:", cancellationToken: cancellationToken);
 
+            // Устанавливаем состояние пользователя как "ожидает ввода города"
+            SetUserState(chatId, UserState.WaitingForCity);
+
             // Создаем кнопку "Отмена"
             var cancelButton = InlineKeyboardButton.WithCallbackData("Відмінити", "cancel_change_city");
 
@@ -252,11 +317,9 @@ namespace GUI_Bot
                 "\n\nНатисніть кнопку \"Відмінити\", щоб скасувати зміну міста.", replyMarkup: keyboard, cancellationToken: cancellationToken);
 
 
-            // Устанавливаем состояние пользователя как "ожидает ввода города"
-            SetUserState(chatId, UserState.WaitingForCity);
+           
         }
         #endregion
-
 
         private async Task HandleStartCommandAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
@@ -283,7 +346,7 @@ namespace GUI_Bot
                 cancellationToken: cancellationToken);
         }
 
-        private async Task HandleWeatherCommandAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+        private async Task HandleWeatherCommandAsync(ITelegramBotClient botClient, long chatId, string cityName, CancellationToken cancellationToken)
         {
             if (!string.IsNullOrWhiteSpace(cityName))
             {
@@ -298,15 +361,15 @@ namespace GUI_Bot
             }
         }
 
-        private void SetCityFromCommand(string messageText)
-        {
-            try
-            {
-                cityName = messageText.Replace("/weather", "").Trim();
-            }
-            catch (Exception ex) { Debug.WriteLine(ex.Message); }
-            return;
-        }
+        //private void SetCityFromCommand(string messageText)
+        //{
+        //    try
+        //    {
+        //        cityName = messageText.Replace("/weather", "").Trim();
+        //    }
+        //    catch (Exception ex) { Debug.WriteLine(ex.Message); }
+        //    return;
+        //}
 
         private async Task HandleHelpCommandAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
@@ -329,8 +392,6 @@ namespace GUI_Bot
 
             // Отправьте погодную информацию обратно пользователю
             await botClient.SendTextMessageAsync(chatId, weatherInfo, cancellationToken: cts.Token);
-
-
         }
 
         Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
