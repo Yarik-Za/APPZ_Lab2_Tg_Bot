@@ -15,7 +15,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using Message = Telegram.Bot.Types.Message;
 
 
-namespace GUI_Bot
+namespace cmd_noGUI_for_Docker_Bot
 {
     internal class BotService
     {

@@ -1,4 +1,4 @@
-﻿namespace GUI_Bot
+﻿namespace cmd_noGUI_for_Docker_Bot
 {
     partial class MainForm
     {

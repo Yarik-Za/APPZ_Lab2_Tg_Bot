@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace GUI_Bot
+namespace cmd_noGUI_for_Docker_Bot
 {
     internal class WeatherService
     {
