@@ -180,7 +180,10 @@ namespace GUI_Bot
 
                             if (!string.IsNullOrEmpty(cityName))
                                 await HandleWeatherCommandAsync(botClient, chatId, cityName, cancellationToken);
-
+                            else
+                            {
+                                await botClient.SendTextMessageAsync(chatId, "Місто не встановлене.", cancellationToken: cancellationToken);
+                            }
                             //if (string.IsNullOrEmpty(cityName))
                             //    // Logic for handling weather CITY command
                             //    SetCityFromCommand(messageText);

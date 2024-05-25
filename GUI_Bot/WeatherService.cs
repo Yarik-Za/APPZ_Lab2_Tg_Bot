@@ -41,12 +41,12 @@ namespace GUI_Bot
                     }
                 }
 
-                return "Не удалось получить информацию о погоде для указанного города.";
+                return "Не вдалось отримати інформацію про погоду для вказоного міста.";
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка при запросе погоды: {ex.Message}");
-                return $"Ошибка при запросе погоды";
+                Debug.WriteLine($"Помилка при запиті погоди: {ex.Message}");
+                return $"Помилка при запиті погоди";
             }
         }
 
@@ -54,7 +54,7 @@ namespace GUI_Bot
         {
             if (weatherData == null)
             {
-                return "Данные о погоде недоступны.";
+                return "Данні про погоду недоступні.";
             }
 
             return $"Погода в {weatherData.Name} ({weatherData.Sys.Country}):\n" +
