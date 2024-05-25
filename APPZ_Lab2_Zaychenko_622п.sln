@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APPZ_Lab2_Zaychenko_622п", "APPZ_Lab2_Zaychenko_622п\APPZ_Lab2_Zaychenko_622п.csproj", "{32DBDD61-6184-4FD3-9C0B-48C61F9B890C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APPZ_Lab2_Zaychenko_622п", "APPZ_Lab2_Zaychenko_622п\APPZ_Lab2_Zaychenko_622п.csproj", "{32DBDD61-6184-4FD3-9C0B-48C61F9B890C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GUI_Bot", "GUI_Bot\GUI_Bot.csproj", "{FAA9BE6C-7DD6-4F30-A440-2F50F59A95EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI_Bot", "GUI_Bot\GUI_Bot.csproj", "{FAA9BE6C-7DD6-4F30-A440-2F50F59A95EB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "cmd_noGUI_for_Docker_Bot", "cmd_noGUI_for_Docker_Bot\cmd_noGUI_for_Docker_Bot.csproj", "{ED6F3C4A-A16B-4F2F-933F-1CE20DDF969C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{FAA9BE6C-7DD6-4F30-A440-2F50F59A95EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAA9BE6C-7DD6-4F30-A440-2F50F59A95EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAA9BE6C-7DD6-4F30-A440-2F50F59A95EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED6F3C4A-A16B-4F2F-933F-1CE20DDF969C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED6F3C4A-A16B-4F2F-933F-1CE20DDF969C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED6F3C4A-A16B-4F2F-933F-1CE20DDF969C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED6F3C4A-A16B-4F2F-933F-1CE20DDF969C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
