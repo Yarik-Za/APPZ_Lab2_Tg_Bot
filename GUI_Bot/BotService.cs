@@ -21,6 +21,7 @@ namespace cmd_noGUI_for_Docker_Bot
     {
         TelegramBotClient botClient = new TelegramBotClient("6919475386:AAH5YtigtvZ1XXf_3x_CNGVc_B5WJUbpyAE");
         CancellationTokenSource cts = new();
+
         private long waitingForCityChatId; // Чат, в котором ожидается ввод названия города
 
         // Словарь для хранения городов пользователей по идентификатору чата  userCity
@@ -141,7 +142,6 @@ namespace cmd_noGUI_for_Docker_Bot
         {
             try
             {
-
                 if (update.Type == UpdateType.Message)
                 {
 
@@ -150,11 +150,11 @@ namespace cmd_noGUI_for_Docker_Bot
                     if (update.Message is not { } message)
                         return;
 
-                    var chatId = message.Chat.Id;
-
                     // Only process text messages
                     if (message.Text is not { } messageText)
                         return;
+
+                    var chatId = message.Chat.Id;
 
                     Debug.WriteLine($"Received a '{messageText}' message in chat {chatId} from {message.Chat.FirstName}.");
 
@@ -417,19 +417,19 @@ namespace cmd_noGUI_for_Docker_Bot
             return Task.CompletedTask;
         }
 
-        private async Task SendTextMessageAsyncNoBlock(long ch_id, string text, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await botClient.SendTextMessageAsync(ch_id, text, cancellationToken: cancellationToken);
-            }
-            catch
-            {
+        //private async Task SendTextMessageAsyncNoBlock(long ch_id, string text, CancellationToken cancellationToken)
+        //{
+        //    try
+        //    {
+        //        await botClient.SendTextMessageAsync(ch_id, text, cancellationToken: cancellationToken);
+        //    }
+        //    catch
+        //    {
 
-            }
+        //    }
 
 
-        }
+        //}
 
     }
 }

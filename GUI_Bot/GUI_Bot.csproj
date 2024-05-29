@@ -9,13 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove=".dockerignore" />
     <None Remove="BuildContainerCommands.txt" />
     <None Remove="Dockerfile" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="BuildContainerCommands.txt" />
-    <Compile Include="Dockerfile" />
   </ItemGroup>
 
   <ItemGroup>
